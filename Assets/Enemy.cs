@@ -4,67 +4,28 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public float movementSpeed = 5f;
-    public float radius = 5f;
-    public float detectionRadius = 3f;
-    public float stoppingDistance = 1f; // Distance at which the enemy stops moving
-    private Vector3 centerPosition;
-    private float angle;
-    private bool isPlayerDetected;
-    private Transform playerTransform;
+    [SerializeField] private float detectionDistance = 10f;
+    [SerializeField] private float detectionAngle = 60f;
+    [SerializeField] private float detectionFrequency = 0.5f;
 
-    private void Start()
-    {
-        centerPosition = transform.position;
-        playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
-    }
+    private float detectionTimer;
 
     private void Update()
     {
-        if (isPlayerDetected)
+        detectionTimer -= Time.deltaTime;
+        if (detectionTimer <= 0f)
         {
-            // Calculate the distance between the enemy and the player
-            float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+            detectionTimer = detectionFrequency;
 
-            if (distanceToPlayer > stoppingDistance)
+            // Check if player is within detection distance and angle
+            Vector3 directionToPlayer = PlayerController.Instance.transform.position - transform.position;
+            float distanceToPlayer = directionToPlayer.magnitude;
+            float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer.normalized);
+            if (distanceToPlayer < detectionDistance && angleToPlayer < detectionAngle)
             {
-                // Move towards the player until reaching the stopping distance
-                transform.position = Vector3.MoveTowards(transform.position, playerTransform.position, movementSpeed * Time.deltaTime);
+                // Player detected, implement behavior here
+                Debug.Log("Player detected!");
             }
-        }
-        else
-        {
-            // Calculate the next position based on the current angle
-            float x = Mathf.Sin(angle) * radius;
-            float z = Mathf.Cos(angle) * radius;
-            Vector3 nextPosition = centerPosition + new Vector3(x, 0f, z);
-
-            // Move the enemy to the next position
-            transform.position = Vector3.MoveTowards(transform.position, nextPosition, movementSpeed * Time.deltaTime);
-            // Update the angle for the next frame
-            angle += movementSpeed * Time.deltaTime;
-
-            // Reset the angle if it exceeds a full circle (2pi)
-            if (angle >= Mathf.PI * 2f)
-            {
-                angle -= Mathf.PI * 2f;
-            }
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerDetected = true;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerDetected = false;
         }
     }
 }
